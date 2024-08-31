@@ -168,4 +168,87 @@ correctamente. Para ello usamos ``task.add_done_callback(function_to_call())``
 La función a llamar debe tener como primer parámetro la Task.
 
 ## Capítulo 3. Colecciones de Tasks
+### Función asyncio.gather()
+
+La función ``asyncio.gather()`` se utiliza para esperar **corrutinas, Futuros 
+o task** a la misma vez. Es decir, hacer un "await" de todas de una sola vez.
+Por ejemplo:
+> asyncio.gather(coroutine1())
+
+Si pasamos una lista de Tasks, deberemos de hacer un desempaquetado, utilizando
+"*".
+> coros = [coro1(), coro2()]
+> asyncio.gather(*coros)
+
+**IMPORTANTE**: si se proveen corrutinas, se encapsularán como Tasks (como si
+hubésemos llamado a create_task).
+
+La llamada asyncio.gather devuelve un Future:
+````python
+python example_2_gather.py
+````
+
+### Función asyncio.wait()
+La finalidad de wait es la misma que gather, pero con mayor granularidad:
+- Nos devuelve dos cosas: las tareas completadas y las pendientes
+- Podemos definir cuándo nos devuelve el control con **return_when**: ALL_COMPLETED,
+FIRST_COMPLETED, FIRST_EXCEPTION
+- Podemos especificar un timeout. Si el timeout se alcanza, se devuelve la 
+ejecución y las que estaban pending continúan ejecutándose
+
+En el siguiente ejemplo, podemos ver cuáles son las tareas que han terminado 
+cuando se ha alcanzado el timeout y cuales no:
+````python
+python example_wait.py
+````
+### Función await_for
+Es igual que **await**, pero se puede indicar un timeout. Si se llama sin
+timeout, es lo mismo que await. Si se llama con timeout, devolverá TimeOutError
+si se alcanza el timeout.  
+En el siguiente ejemplo, veremos cómo se levanta un TimeoutError al expirar el
+timeout configurado:
+````python
+python example_wait_for.py
+````
+
+## Función as_completed
+Esta función nos retorna un iterable de awaitables. Sin embargo, los iterables
+deben ser **esperados**. Si no, nos retorna un RuntimeWarning. Ponemos 
+configurar un **timeout**, que nos devolverá un TimeOutError si todas las task
+no han terminado en ese tiempo.
+````python
+python example_as_completed.py
+````
+
+## Función to_thread()
+Es una función difícil de entender, pero es realmente útil. Imaginemos que hay
+un procedimiento I/O que debemos ejecutar fuera del bucle de eventos, sin ceder
+el control a otro. La única manera es ejecutarlo fuera del bucle de eventos.
+Para ello, podríamos ejecutarlo en un proceso o una hebra. Esta función está
+diseñada para ejecutar esa función en una hebra. Esto nos permite poder ejecutar
+de forma **paralela una hebra y una o varias corrutinas**. 
+Utilizamos corrutinas porque son mucho más livianas que las hebras (lanzar 1000
+hebras es muchísimo más costoso y puede agotar los recursos del equipo), pero
+si necesitamos lanzar una hebra dentro de un bucle de eventos, tenemos esta 
+función.
+
+Podríamos pensar que podemos hacer una función asíncrona colocando un await a
+la lectura del fichero, pero si queremos usar una libreria para ello (en el 
+core no se encuentra) deberíamos hacerlo así.
+
+En el siguiente ejemplo, tendremos 3 endpoints. En uno de ellos, se ejecutan 
+cosas I/O simuladas con un sleep y devuelve la respuesta. En otro, se ejecuta
+la lectura de un fichero (CPU/bound) por lo que si lo ejecutamos en otra hebra,
+el servidor podrá seguir recibiendo peticiones sin bloquear el bucle de eventos.
+En el último, es un mix de ambos. La petición hace cosas I/O y tareas intensivas
+de CPU. Estas tareas se lanzan en una hebra nueva con to_thread y el resto de 
+tareas I/O se ejecutan en el bucle de eventos.
+````python
+python example_to_thread.py
+````
+
+En este otro ejemplo, el bucle de eventos estará en contínua ejecución, mientras
+que la tarea larga se ejecuta en una hebra separada:
+
+
 
