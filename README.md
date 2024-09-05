@@ -250,5 +250,63 @@ python example_to_thread.py
 En este otro ejemplo, el bucle de eventos estará en contínua ejecución, mientras
 que la tarea larga se ejecuta en una hebra separada:
 
+## Iteradores, generadores y context managers
+### Iteradores asíncronos
+Un iterador asíncrono es un objeto que implementa los métodos **aiter y anext**,
+lo mismo pero asíncronos. El aiter retorna la instancia en sí misma y anext 
+retorna el siguiente elemento.  
+En el siguiente ejemplo podemos ver cómo **__anext__** nos devuelve el siguiente
+elemento y que se define como async. En la lógica durante el retorno, podemos
+incluir un await para alguna tarea pesada (un sleep)
+````python
+python example_iterator.py
+````
 
+### Generadores asíncronos
+Los generadores asíncronos son exactamente lo mismo que los síncronos, pero 
+con soporte de **await**. Es decir, podemos utilizar los iteradores en bucles
+de eventos sin bloquearlo. Para ello, se utiliza el ``async for``
+Debemos implementar __ **anext** __
+En el siguiente ejemplo, podemos comprobar que se utiliza un generador
+asíncrono:
+````python
+python example_generator.py
+````
+Este ejemplo no tiene mucho sentido, ya que el iterador va a esperar a que 
+termine el primero para devolver la llamada por lo que bloqueará el bucle de 
+eventos.
+
+### Context Manager asíncronos
+Un Context Manager asíncrono es lo mismo que uno síncrono, pero con soporte
+para usar await.
+Debemos implementar __ **aenter** __ y __ **aexit** __
+En el siguiente ejemplo, usamos un context manager asíncrono para establecer
+una conexión con la base de datos de manera que podamos esperar mientras se
+establece la conexión. Si no fuese asíncrono, deberíamos esperar ociosos 
+mientras se establece la conexión
+````python
+python example_context_manager.py
+````
+
+# Capítulo 5. Colas y primitivas de sincronización
+Este capítulo es realmente importante debido a la necesidad de la sincronización
+mientras se utilizan las técnicas de concurrencia usando la memoria compartida.
+**Corutina-segura**: es una corrutina que cuando se ejecute concurrentemente 
+se asegura que estará libre de errores. Se refiere a que el código está **libre 
+de condiciones de carrera**: se trata de un bug en programación concurrente. 
+Más formalmente, nna condición de carrera (race condition) 
+ocurre cuando el comportamiento de un software depende del orden o el tiempo
+en que se ejecutan múltiples hilos o procesos que acceden y manipulan recursos
+compartidos. Si los hilos no se sincronizan correctamente, esto puede llevar
+a resultados inesperados o incorrectos, ya que las operaciones no son
+atómicas y pueden interrumpirse mutuamente.  
+Pueden producir inconsistencias de datos, bloqueos (deadlocks), y otros 
+errores difíciles de rastrear.
+
+## Compartir datos entre corrutinas mediante colas
+Las colas se pueden usar para compartir datos entre corrutinas de manera segura.
+Para asincronía, podemos utilizar:
+- cola FIFO ``asyncio.Queue`` (se recupera en el orden que fueron añadidos, o el que lleva más tiempo en la cola)
+- cola LIFO ``asyncio.LifoQueue`` (se recupera el último añadido, o el más reciente)
+- cola con prioridad ``asyncio.PriorityQueue``
 
