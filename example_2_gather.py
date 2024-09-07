@@ -5,6 +5,8 @@ from time import sleep
 async def coro1():
     sleep(0.1)
     return 'Hello from coro1'
+
+
 async def coro2():
     sleep(0.1)
     return 'Hello from coro2'
